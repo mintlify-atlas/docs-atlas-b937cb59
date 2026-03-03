@@ -1,0 +1,131 @@
+{
+  "projectType": "framework",
+  "projectName": "Vite",
+  "projectDescription": "Next generation frontend build tool and dev server with lightning-fast HMR",
+  "theme": "aspen",
+  "primaryColor": "#646cff",
+  "lightColor": "#747bff",
+  "darkColor": "#535bf2",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "why-vite",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/features",
+              "concepts/dependency-pre-bundling",
+              "concepts/static-asset-handling",
+              "concepts/build-production",
+              "concepts/environment-api"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/using-plugins",
+              "guides/backend-integration",
+              "guides/env-and-mode",
+              "guides/server-side-rendering",
+              "guides/static-deployment",
+              "guides/performance",
+              "guides/troubleshooting",
+              "guides/philosophy",
+              "guides/migration"
+            ]
+          },
+          {
+            "group": "CLI",
+            "pages": [
+              "cli/commands",
+              "cli/options"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "JavaScript API",
+            "pages": [
+              "api/javascript-api",
+              "api/hmr-api",
+              "api/environment-api",
+              "api/environment-instances",
+              "api/environment-runtimes"
+            ]
+          },
+          {
+            "group": "Plugin API",
+            "pages": [
+              "api/plugin-api",
+              "api/environment-plugins",
+              "api/environment-frameworks"
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "config/overview",
+              "config/shared-options",
+              "config/server-options",
+              "config/build-options",
+              "config/preview-options",
+              "config/dep-optimization-options",
+              "config/ssr-options",
+              "config/worker-options"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Lightning-fast Hot Module Replacement (HMR)",
+    "Native ES modules support in dev",
+    "Optimized production builds with Rollup",
+    "Universal plugin interface",
+    "Framework-agnostic with first-class framework support",
+    "TypeScript and JSX support out of the box",
+    "CSS preprocessors and PostCSS integration",
+    "JSON and WebAssembly import support",
+    "Built-in SSR support",
+    "Rich development features (glob imports, env variables, etc.)"
+  ],
+  "publicApiSurface": [
+    "createServer",
+    "build",
+    "preview",
+    "defineConfig",
+    "resolveConfig",
+    "loadConfigFromFile",
+    "optimizeDeps",
+    "transformWithEsbuild",
+    "transformWithOxc",
+    "preprocessCSS",
+    "createIdResolver",
+    "DevEnvironment",
+    "BuildEnvironment",
+    "createRunnableDevEnvironment",
+    "createFetchableDevEnvironment",
+    "createServerModuleRunner",
+    "fetchModule",
+    "createServerHotChannel",
+    "loadEnv",
+    "normalizePath",
+    "mergeConfig",
+    "createFilter",
+    "searchForWorkspaceRoot",
+    "send"
+  ]
+}
