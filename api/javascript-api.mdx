@@ -1,0 +1,699 @@
+---
+title: JavaScript API
+description: Vite's JavaScript APIs for programmatic server control, building, and preview
+---
+
+Vite's JavaScript APIs are fully typed, and it's recommended to use TypeScript or enable JS type checking in VS Code to leverage the intellisense and validation.
+
+## createServer
+
+Create a Vite development server instance programmatically.
+
+**Type Signature:**
+
+```ts
+async function createServer(inlineConfig?: InlineConfig): Promise<ViteDevServer>
+```
+
+### Parameters
+
+<ParamField path="inlineConfig" type="InlineConfig" optional>
+  Configuration object that extends `UserConfig` with additional properties:
+  
+  <Expandable title="InlineConfig Properties">
+    <ParamField path="configFile" type="string | false" optional>
+      Specify config file to use. If not set, Vite will try to automatically resolve one from project root. Set to `false` to disable auto resolving.
+    </ParamField>
+    
+    <ParamField path="mode" type="string" optional>
+      Mode to run the server in (defaults to `'development'`)
+    </ParamField>
+    
+    <ParamField path="root" type="string" optional>
+      Project root directory
+    </ParamField>
+    
+    <ParamField path="server" type="ServerOptions" optional>
+      Server-specific options
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Returns
+
+<ResponseField name="server" type="ViteDevServer">
+  A promise that resolves to a ViteDevServer instance
+</ResponseField>
+
+### Example Usage
+
+```ts
+import { createServer } from 'vite'
+
+const server = await createServer({
+  // any valid user config options, plus `mode` and `configFile`
+  configFile: false,
+  root: import.meta.dirname,
+  server: {
+    port: 1337,
+  },
+})
+await server.listen()
+
+server.printUrls()
+server.bindCLIShortcuts({ print: true })
+```
+
+<Note>
+When using `createServer` and `build` in the same Node.js process, both functions rely on `process.env.NODE_ENV` to work properly, which also depends on the `mode` config option. To prevent conflicting behavior, set `process.env.NODE_ENV` or the `mode` of the two APIs to `development`. Otherwise, you can spawn a child process to run the APIs separately.
+</Note>
+
+### Middleware Mode Example
+
+When using middleware mode combined with proxy config for WebSocket, the parent http server should be provided in `middlewareMode` to bind the proxy correctly.
+
+<Expandable title="Middleware Mode with WebSocket Proxy">
+
+```ts
+import http from 'http'
+import { createServer } from 'vite'
+
+const parentServer = http.createServer() // or express, koa, etc.
+
+const vite = await createServer({
+  server: {
+    // Enable middleware mode
+    middlewareMode: {
+      // Provide the parent http server for proxy WebSocket
+      server: parentServer,
+    },
+    proxy: {
+      '/ws': {
+        target: 'ws://localhost:3000',
+        // Proxying WebSocket
+        ws: true,
+      },
+    },
+  },
+})
+
+parentServer.use(vite.middlewares)
+```
+
+</Expandable>
+
+## ViteDevServer
+
+The ViteDevServer interface provides methods and properties for controlling the dev server.
+
+```ts
+interface ViteDevServer {
+  config: ResolvedConfig
+  middlewares: Connect.Server
+  httpServer: http.Server | null
+  watcher: FSWatcher
+  ws: WebSocketServer
+  pluginContainer: PluginContainer
+  moduleGraph: ModuleGraph
+  resolvedUrls: ResolvedServerUrls | null
+  transformRequest(url: string, options?: TransformOptions): Promise<TransformResult | null>
+  transformIndexHtml(url: string, html: string, originalUrl?: string): Promise<string>
+  ssrLoadModule(url: string, options?: { fixStacktrace?: boolean }): Promise<Record<string, any>>
+  ssrFixStacktrace(e: Error): void
+  reloadModule(module: ModuleNode): Promise<void>
+  listen(port?: number, isRestart?: boolean): Promise<ViteDevServer>
+  restart(forceOptimize?: boolean): Promise<void>
+  close(): Promise<void>
+  bindCLIShortcuts(options?: BindCLIShortcutsOptions<ViteDevServer>): void
+  waitForRequestsIdle: (ignoredId?: string) => Promise<void>
+  printUrls(): void
+}
+```
+
+### Properties
+
+<ParamField path="config" type="ResolvedConfig">
+  The resolved Vite config object
+</ParamField>
+
+<ParamField path="middlewares" type="Connect.Server">
+  A connect app instance that can be used to attach custom middlewares to the dev server or as the handler function of a custom http server
+</ParamField>
+
+<ParamField path="httpServer" type="http.Server | null">
+  Native Node http server instance. Will be null in middleware mode.
+</ParamField>
+
+<ParamField path="watcher" type="FSWatcher">
+  Chokidar watcher instance. If `config.server.watch` is set to `null`, it will not watch any files and calling `add` or `unwatch` will have no effect.
+</ParamField>
+
+<ParamField path="ws" type="WebSocketServer">
+  WebSocket server with `send(payload)` method
+</ParamField>
+
+<ParamField path="pluginContainer" type="PluginContainer">
+  Rollup plugin container that can run plugin hooks on a given file
+</ParamField>
+
+<ParamField path="moduleGraph" type="ModuleGraph">
+  Module graph that tracks the import relationships, url to file mapping and hmr state
+</ParamField>
+
+<ParamField path="resolvedUrls" type="ResolvedServerUrls | null">
+  The resolved urls Vite prints on the CLI (URL-encoded). Returns `null` in middleware mode or if the server is not listening on any port.
+</ParamField>
+
+### Methods
+
+<ParamField path="transformRequest" type="(url: string, options?: TransformOptions) => Promise<TransformResult | null>">
+  Programmatically resolve, load and transform a URL and get the result without going through the http request pipeline
+</ParamField>
+
+<ParamField path="transformIndexHtml" type="(url: string, html: string, originalUrl?: string) => Promise<string>">
+  Apply Vite built-in HTML transforms and any plugin HTML transforms
+</ParamField>
+
+<ParamField path="ssrLoadModule" type="(url: string, options?: { fixStacktrace?: boolean }) => Promise<Record<string, any>>">
+  Load a given URL as an instantiated module for SSR
+</ParamField>
+
+<ParamField path="ssrFixStacktrace" type="(e: Error) => void">
+  Fix ssr error stacktrace
+</ParamField>
+
+<ParamField path="reloadModule" type="(module: ModuleNode) => Promise<void>">
+  Triggers HMR for a module in the module graph. You can use the `server.moduleGraph` API to retrieve the module to be reloaded. If `hmr` is false, this is a no-op.
+</ParamField>
+
+<ParamField path="listen" type="(port?: number, isRestart?: boolean) => Promise<ViteDevServer>">
+  Start the server
+</ParamField>
+
+<ParamField path="restart" type="(forceOptimize?: boolean) => Promise<void>">
+  Restart the server. The `forceOptimize` parameter forces the optimizer to re-bundle, same as `--force` cli flag.
+</ParamField>
+
+<ParamField path="close" type="() => Promise<void>">
+  Stop the server
+</ParamField>
+
+<ParamField path="bindCLIShortcuts" type="(options?: BindCLIShortcutsOptions<ViteDevServer>) => void">
+  Bind CLI shortcuts
+</ParamField>
+
+<ParamField path="waitForRequestsIdle" type="(ignoredId?: string) => Promise<void>">
+  **Experimental** - Wait until all static imports are processed. If called from a load or transform plugin hook, the id needs to be passed as a parameter to avoid deadlocks.
+</ParamField>
+
+<Warning>
+`waitForRequestsIdle` is meant to be used as an escape hatch to improve DX for features that can't be implemented following the on-demand nature of the Vite dev server. When used in a load or transform hook with the default HTTP1 server, one of the six http channels will be blocked until the server processes all static imports.
+</Warning>
+
+## build
+
+Build for production programmatically.
+
+**Type Signature:**
+
+```ts
+async function build(
+  inlineConfig?: InlineConfig,
+): Promise<RollupOutput | RollupOutput[]>
+```
+
+### Parameters
+
+<ParamField path="inlineConfig" type="InlineConfig" optional>
+  Configuration object that extends `UserConfig` with additional properties like `mode` and `configFile`
+</ParamField>
+
+### Returns
+
+<ResponseField name="output" type="RollupOutput | RollupOutput[]">
+  Returns a Rollup output object or array of outputs
+</ResponseField>
+
+### Example Usage
+
+```ts
+import path from 'node:path'
+import { build } from 'vite'
+
+await build({
+  root: path.resolve(import.meta.dirname, './project'),
+  base: '/foo/',
+  build: {
+    rollupOptions: {
+      // ...
+    },
+  },
+})
+```
+
+## preview
+
+Create a Vite preview server to serve the built application.
+
+**Type Signature:**
+
+```ts
+async function preview(inlineConfig?: InlineConfig): Promise<PreviewServer>
+```
+
+### Parameters
+
+<ParamField path="inlineConfig" type="InlineConfig" optional>
+  Configuration object with preview-specific options
+</ParamField>
+
+### Returns
+
+<ResponseField name="previewServer" type="PreviewServer">
+  A promise that resolves to a PreviewServer instance
+</ResponseField>
+
+### Example Usage
+
+```ts
+import { preview } from 'vite'
+
+const previewServer = await preview({
+  // any valid user config options, plus `mode` and `configFile`
+  preview: {
+    port: 8080,
+    open: true,
+  },
+})
+
+previewServer.printUrls()
+previewServer.bindCLIShortcuts({ print: true })
+```
+
+## PreviewServer
+
+The PreviewServer interface for controlling the preview server.
+
+```ts
+interface PreviewServer {
+  config: ResolvedConfig
+  middlewares: Connect.Server
+  httpServer: http.Server
+  resolvedUrls: ResolvedServerUrls | null
+  printUrls(): void
+  bindCLIShortcuts(options?: BindCLIShortcutsOptions<PreviewServer>): void
+}
+```
+
+### Properties
+
+<ParamField path="config" type="ResolvedConfig">
+  The resolved vite config object
+</ParamField>
+
+<ParamField path="middlewares" type="Connect.Server">
+  A connect app instance that can be used to attach custom middlewares to the preview server
+</ParamField>
+
+<ParamField path="httpServer" type="http.Server">
+  Native Node http server instance
+</ParamField>
+
+<ParamField path="resolvedUrls" type="ResolvedServerUrls | null">
+  The resolved urls Vite prints on the CLI (URL-encoded). Returns `null` if the server is not listening on any port.
+</ParamField>
+
+## resolveConfig
+
+Resolve the Vite configuration programmatically.
+
+**Type Signature:**
+
+```ts
+async function resolveConfig(
+  inlineConfig: InlineConfig,
+  command: 'build' | 'serve',
+  defaultMode = 'development',
+  defaultNodeEnv = 'development',
+  isPreview = false,
+): Promise<ResolvedConfig>
+```
+
+### Parameters
+
+<ParamField path="inlineConfig" type="InlineConfig" required>
+  Inline configuration object
+</ParamField>
+
+<ParamField path="command" type="'build' | 'serve'" required>
+  The command value is `serve` in dev and preview, and `build` in build
+</ParamField>
+
+<ParamField path="defaultMode" type="string" optional default="'development'">
+  Default mode to use if not specified
+</ParamField>
+
+<ParamField path="defaultNodeEnv" type="string" optional default="'development'">
+  Default NODE_ENV to use if not specified
+</ParamField>
+
+<ParamField path="isPreview" type="boolean" optional default="false">
+  Whether this is for preview mode
+</ParamField>
+
+### Returns
+
+<ResponseField name="config" type="ResolvedConfig">
+  The fully resolved Vite configuration
+</ResponseField>
+
+## mergeConfig
+
+Deeply merge two Vite configs.
+
+**Type Signature:**
+
+```ts
+function mergeConfig(
+  defaults: Record<string, any>,
+  overrides: Record<string, any>,
+  isRoot = true,
+): Record<string, any>
+```
+
+### Parameters
+
+<ParamField path="defaults" type="Record<string, any>" required>
+  The default configuration object
+</ParamField>
+
+<ParamField path="overrides" type="Record<string, any>" required>
+  The override configuration object
+</ParamField>
+
+<ParamField path="isRoot" type="boolean" optional default="true">
+  Represents the level within the Vite config which is being merged. Set to `false` if you're merging two `build` options, for example.
+</ParamField>
+
+### Returns
+
+<ResponseField name="merged" type="Record<string, any>">
+  The merged configuration object
+</ResponseField>
+
+<Note>
+`mergeConfig` accepts only config in object form. If you have a config in callback form, you should call it before passing into `mergeConfig`.
+</Note>
+
+### Example with Callback Config
+
+You can use the `defineConfig` helper to merge a config in callback form with another config:
+
+```ts
+import {
+  defineConfig,
+  mergeConfig,
+  type UserConfigFnObject,
+  type UserConfig,
+} from 'vite'
+
+declare const configAsCallback: UserConfigFnObject
+declare const configAsObject: UserConfig
+
+export default defineConfig((configEnv) =>
+  mergeConfig(configAsCallback(configEnv), configAsObject),
+)
+```
+
+## searchForWorkspaceRoot
+
+Search for the root of the potential workspace.
+
+**Type Signature:**
+
+```ts
+function searchForWorkspaceRoot(
+  current: string,
+  root = searchForPackageRoot(current),
+): string
+```
+
+### Parameters
+
+<ParamField path="current" type="string" required>
+  Current directory to start searching from
+</ParamField>
+
+<ParamField path="root" type="string" optional>
+  Root directory to use as fallback
+</ParamField>
+
+### Returns
+
+<ResponseField name="workspaceRoot" type="string">
+  The workspace root directory path
+</ResponseField>
+
+Search for the root of the potential workspace if it meets the following conditions, otherwise it would fallback to `root`:
+
+- contains `workspaces` field in `package.json`
+- contains one of the following file:
+  - `lerna.json`
+  - `pnpm-workspace.yaml`
+
+## loadEnv
+
+Load `.env` files from the environment directory.
+
+**Type Signature:**
+
+```ts
+function loadEnv(
+  mode: string,
+  envDir: string,
+  prefixes: string | string[] = 'VITE_',
+): Record<string, string>
+```
+
+### Parameters
+
+<ParamField path="mode" type="string" required>
+  The mode to load env files for (e.g., 'development', 'production')
+</ParamField>
+
+<ParamField path="envDir" type="string" required>
+  The directory to load env files from
+</ParamField>
+
+<ParamField path="prefixes" type="string | string[]" optional default="'VITE_'">
+  Only env variables prefixed with these values are loaded
+</ParamField>
+
+### Returns
+
+<ResponseField name="env" type="Record<string, string>">
+  An object containing the loaded environment variables
+</ResponseField>
+
+By default, only env variables prefixed with `VITE_` are loaded, unless `prefixes` is changed.
+
+## normalizePath
+
+Normalize a path to interoperate between Vite plugins.
+
+**Type Signature:**
+
+```ts
+function normalizePath(id: string): string
+```
+
+### Parameters
+
+<ParamField path="id" type="string" required>
+  The file path to normalize
+</ParamField>
+
+### Returns
+
+<ResponseField name="normalizedPath" type="string">
+  The normalized path with forward slashes
+</ResponseField>
+
+## transformWithOxc
+
+Transform JavaScript or TypeScript with Oxc Transformer.
+
+**Type Signature:**
+
+```ts
+async function transformWithOxc(
+  code: string,
+  filename: string,
+  options?: OxcTransformOptions,
+  inMap?: object,
+): Promise<Omit<OxcTransformResult, 'errors'> & { warnings: string[] }>
+```
+
+### Parameters
+
+<ParamField path="code" type="string" required>
+  The source code to transform
+</ParamField>
+
+<ParamField path="filename" type="string" required>
+  The filename for the code
+</ParamField>
+
+<ParamField path="options" type="OxcTransformOptions" optional>
+  Oxc transformer options
+</ParamField>
+
+<ParamField path="inMap" type="object" optional>
+  Input source map
+</ParamField>
+
+### Returns
+
+<ResponseField name="result" type="OxcTransformResult & { warnings: string[] }">
+  The transformed code with source map and warnings
+</ResponseField>
+
+Useful for plugins that prefer matching Vite's internal Oxc Transformer transform.
+
+## transformWithEsbuild
+
+<Warning>
+**Deprecated:** Use `transformWithOxc` instead.
+</Warning>
+
+Transform JavaScript or TypeScript with esbuild.
+
+**Type Signature:**
+
+```ts
+async function transformWithEsbuild(
+  code: string,
+  filename: string,
+  options?: EsbuildTransformOptions,
+  inMap?: object,
+): Promise<ESBuildTransformResult>
+```
+
+Useful for plugins that prefer matching Vite's internal esbuild transform.
+
+## loadConfigFromFile
+
+Load a Vite config file manually.
+
+**Type Signature:**
+
+```ts
+async function loadConfigFromFile(
+  configEnv: ConfigEnv,
+  configFile?: string,
+  configRoot: string = process.cwd(),
+  logLevel?: LogLevel,
+  customLogger?: Logger,
+): Promise<{
+  path: string
+  config: UserConfig
+  dependencies: string[]
+} | null>
+```
+
+### Parameters
+
+<ParamField path="configEnv" type="ConfigEnv" required>
+  Configuration environment with `command` and `mode`
+</ParamField>
+
+<ParamField path="configFile" type="string" optional>
+  Path to the config file to load
+</ParamField>
+
+<ParamField path="configRoot" type="string" optional default="process.cwd()">
+  Root directory to search for config
+</ParamField>
+
+<ParamField path="logLevel" type="LogLevel" optional>
+  Logging level
+</ParamField>
+
+<ParamField path="customLogger" type="Logger" optional>
+  Custom logger instance
+</ParamField>
+
+### Returns
+
+<ResponseField name="result" type="{ path: string, config: UserConfig, dependencies: string[] } | null">
+  The loaded config with its path and dependencies, or null if not found
+</ResponseField>
+
+## preprocessCSS
+
+<Warning>
+**Experimental:** [Give Feedback](https://github.com/vitejs/vite/discussions/13815)
+</Warning>
+
+Pre-process CSS files to plain CSS.
+
+**Type Signature:**
+
+```ts
+async function preprocessCSS(
+  code: string,
+  filename: string,
+  config: ResolvedConfig,
+): Promise<PreprocessCSSResult>
+
+interface PreprocessCSSResult {
+  code: string
+  map?: SourceMapInput
+  modules?: Record<string, string>
+  deps?: Set<string>
+}
+```
+
+### Parameters
+
+<ParamField path="code" type="string" required>
+  The CSS source code
+</ParamField>
+
+<ParamField path="filename" type="string" required>
+  The filename with extension (e.g., `.scss`, `.less`, `.styl`)
+</ParamField>
+
+<ParamField path="config" type="ResolvedConfig" required>
+  The resolved Vite configuration
+</ParamField>
+
+### Returns
+
+<ResponseField name="result" type="PreprocessCSSResult">
+  The processed CSS with optional source map and CSS modules mapping
+  
+  <Expandable title="PreprocessCSSResult Properties">
+    <ResponseField name="code" type="string">
+      The transformed CSS code
+    </ResponseField>
+    
+    <ResponseField name="map" type="SourceMapInput" optional>
+      Source map for the transformation
+    </ResponseField>
+    
+    <ResponseField name="modules" type="Record<string, string>" optional>
+      CSS modules class name mappings (if `.module.{ext}` file)
+    </ResponseField>
+    
+    <ResponseField name="deps" type="Set<string>" optional>
+      Dependencies discovered during processing
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+Pre-processes `.css`, `.scss`, `.sass`, `.less`, `.styl` and `.stylus` files to plain CSS so it can be used in browsers or parsed by other tools. The pre-processor used is inferred from the `filename` extension.
+
+<Note>
+The corresponding pre-processor must be installed if used. Pre-processing will not resolve URLs in `url()` or `image-set()`.
+</Note>

@@ -1,0 +1,238 @@
+---
+title: Static Asset Handling
+description: Learn how Vite handles static assets including imports, the public directory, and various asset types
+---
+
+Vite provides multiple ways to handle static assets in your application, from automatic imports to the public directory for assets that need special handling.
+
+## Importing Asset as URL
+
+Importing a static asset will return the resolved public URL when it is served:
+
+```js
+import imgUrl from './img.png'
+document.getElementById('hero-img').src = imgUrl
+```
+
+For example, `imgUrl` will be `/src/img.png` during development, and become `/assets/img.2d8efhg.png` in the production build.
+
+The behavior is similar to webpack's `file-loader`. The difference is that the import can be either using absolute public paths (based on project root during dev) or relative paths.
+
+<Info>
+**Asset Handling Features:**
+
+- `url()` references in CSS are handled the same way.
+- If using the Vue plugin, asset references in Vue SFC templates are automatically converted into imports.
+- Common image, media, and font filetypes are detected as assets automatically. You can extend the internal list using the `assetsInclude` option.
+- Referenced assets are included as part of the build assets graph, will get hashed file names, and can be processed by plugins for optimization.
+- Assets smaller in bytes than the `assetsInlineLimit` option will be inlined as base64 data URLs.
+</Info>
+
+<Warning>
+Git LFS placeholders are automatically excluded from inlining because they do not contain the content of the file they represent. To get inlining, make sure to download the file contents via Git LFS before building.
+</Warning>
+
+<Tip>
+**Inlining SVGs through `url()`**
+
+When passing a URL of SVG to a manually constructed `url()` by JS, the variable should be wrapped within double quotes.
+
+```js
+import imgUrl from './img.svg'
+document.getElementById('hero-img').style.background = `url("${imgUrl}")`
+```
+</Tip>
+
+## Asset Import Types
+
+Vite supports various ways to import assets with different suffixes to control how they're handled.
+
+<Tabs>
+  <Tab title="URL Import">
+    Assets that are not included in the internal list or in `assetsInclude` can be explicitly imported as a URL using the `?url` suffix. This is useful, for example, to import Houdini Paint Worklets.
+    
+    ```js
+    import workletURL from 'extra-scalloped-border/worklet.js?url'
+    CSS.paintWorklet.addModule(workletURL)
+    ```
+  </Tab>
+  <Tab title="Inline/No-Inline">
+    Assets can be explicitly imported with inlining or no inlining using the `?inline` or `?no-inline` suffix respectively.
+    
+    ```js
+    import imgUrl1 from './img.svg?no-inline'
+    import imgUrl2 from './img.png?inline'
+    ```
+  </Tab>
+  <Tab title="String Import">
+    Assets can be imported as strings using the `?raw` suffix.
+    
+    ```js
+    import shaderString from './shader.glsl?raw'
+    ```
+  </Tab>
+  <Tab title="Worker Import">
+    Scripts can be imported as web workers with the `?worker` or `?sharedworker` suffix.
+    
+    ```js
+    // Separate chunk in the production build
+    import Worker from './shader.js?worker'
+    const worker = new Worker()
+    
+    // Shared worker
+    import SharedWorker from './shader.js?sharedworker'
+    const sharedWorker = new SharedWorker()
+    
+    // Inlined as base64 strings
+    import InlineWorker from './shader.js?worker&inline'
+    ```
+  </Tab>
+</Tabs>
+
+## The `public` Directory
+
+If you have assets that are:
+
+- Never referenced in source code (e.g. `robots.txt`)
+- Must retain the exact same file name (without hashing)
+- ...or you simply don't want to have to import an asset first just to get its URL
+
+Then you can place the asset in a special `public` directory under your project root. Assets in this directory will be served at root path `/` during dev, and copied to the root of the dist directory as-is.
+
+The directory defaults to `<root>/public`, but can be configured via the `publicDir` option.
+
+<CodeGroup>
+```text Directory Structure
+project/
+├── public/
+│   ├── favicon.ico
+│   ├── robots.txt
+│   └── icon.png
+└── src/
+    └── main.js
+```
+
+```html Usage in HTML
+<!-- Reference using root absolute path -->
+<link rel="icon" href="/favicon.ico" />
+<img src="/icon.png" alt="Icon" />
+```
+</CodeGroup>
+
+<Note>
+You should always reference `public` assets using root absolute path - for example, `public/icon.png` should be referenced in source code as `/icon.png`.
+</Note>
+
+<Tip>
+**Choosing between imports and the `public` directory**
+
+In general, prefer **importing assets** unless you specifically need the guarantees provided by the `public` directory.
+</Tip>
+
+## Dynamic Asset URLs with `new URL()`
+
+`import.meta.url` is a native ESM feature that exposes the current module's URL. Combining it with the native URL constructor, we can obtain the full, resolved URL of a static asset using relative path from a JavaScript module:
+
+```js
+const imgUrl = new URL('./img.png', import.meta.url).href
+
+document.getElementById('hero-img').src = imgUrl
+```
+
+<Info>
+This works natively in modern browsers - in fact, Vite doesn't need to process this code at all during development!
+</Info>
+
+This pattern also supports dynamic URLs via template literals:
+
+```js
+function getImageUrl(name) {
+  // note that this does not include files in subdirectories
+  return new URL(`./dir/${name}.png`, import.meta.url).href
+}
+```
+
+During the production build, Vite will perform necessary transforms so that the URLs still point to the correct location even after bundling and asset hashing. However, the URL string must be static so it can be analyzed, otherwise the code will be left as is, which can cause runtime errors if `build.target` does not support `import.meta.url`.
+
+```js
+// Vite will not transform this
+const imgUrl = new URL(imagePath, import.meta.url).href
+```
+
+<details>
+<summary>How it works</summary>
+
+Vite will transform the `getImageUrl` function to:
+
+```js
+import __img0png from './dir/img0.png'
+import __img1png from './dir/img1.png'
+
+function getImageUrl(name) {
+  const modules = {
+    './dir/img0.png': __img0png,
+    './dir/img1.png': __img1png,
+  }
+  return new URL(modules[`./dir/${name}.png`], import.meta.url).href
+}
+```
+</details>
+
+<Warning>
+**Does not work with SSR**
+
+This pattern does not work if you are using Vite for Server-Side Rendering, because `import.meta.url` has different semantics in browsers vs. Node.js. The server bundle also cannot determine the client host URL ahead of time.
+</Warning>
+
+## TypeScript Support
+
+TypeScript, by default, does not recognize static asset imports as valid modules. To fix this, include `vite/client` in your `tsconfig.json`:
+
+```json tsconfig.json
+{
+  "compilerOptions": {
+    "types": ["vite/client"]
+  }
+}
+```
+
+Alternatively, you can add a `d.ts` declaration file:
+
+```typescript vite-env.d.ts
+/// <reference types="vite/client" />
+```
+
+To override the default typing, add a type definition file that contains your typings. For example, to make the default import of `*.svg` a React component:
+
+<CodeGroup>
+```ts vite-env-override.d.ts
+declare module '*.svg' {
+  const content: React.FC<React.SVGProps<SVGElement>>
+  export default content
+}
+```
+
+```json tsconfig.json
+{
+  "include": ["src", "./vite-env-override.d.ts"]
+}
+```
+</CodeGroup>
+
+## Asset Configuration Options
+
+### `assetsInclude`
+
+Extend the internal list of asset types that Vite should treat as assets.
+
+### `assetsInlineLimit`
+
+Control the threshold (in bytes) for inlining assets as base64 data URLs. Assets smaller than this limit will be inlined.
+
+### `publicDir`
+
+Configure the directory to serve as plain static assets. Files in this directory are served at `/` during dev and copied to the root of `outDir` during build.
+
+<Note>
+The `publicDir` can be disabled by setting it to `false`. Files in the disabled public directory won't be served or copied.
+</Note>

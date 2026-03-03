@@ -1,0 +1,151 @@
+---
+title: Introduction to Vite
+description: Next generation frontend tooling for modern web development
+---
+
+# Introduction to Vite
+
+Vite (French word for "quick", pronounced `/viːt/`, like "veet") is a next-generation build tool that provides a faster and leaner development experience for modern web projects.
+
+## What is Vite?
+
+Vite is a modern build tool that consists of two major parts:
+
+- **A dev server** that provides rich feature enhancements over native ES modules, including extremely fast Hot Module Replacement (HMR)
+- **A build command** that bundles your code with Rollup, pre-configured to output highly optimized static assets for production
+
+Vite is opinionated and comes with sensible defaults out of the box, while also being highly extensible via its Plugin API and JavaScript API with full typing support.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Lightning Fast HMR" icon="bolt">
+    Hot Module Replacement that stays consistently fast regardless of app size, leveraging native ESM
+  </Card>
+  
+  <Card title="Instant Server Start" icon="rocket">
+    No bundling required during development - serve code on demand with native ESM
+  </Card>
+  
+  <Card title="Optimized Builds" icon="gauge-high">
+    Pre-configured Rollup build with multi-page and library mode support
+  </Card>
+  
+  <Card title="Rich Features" icon="layer-group">
+    TypeScript, JSX, CSS and more - all supported out of the box
+  </Card>
+  
+  <Card title="Universal Plugins" icon="puzzle-piece">
+    Rollup-compatible plugin interface shared between dev and build
+  </Card>
+  
+  <Card title="Framework Agnostic" icon="grip">
+    Support for React, Vue, Svelte, Solid, and more through official templates
+  </Card>
+</CardGroup>
+
+## Why Vite?
+
+Traditional bundler-based build setups can take unreasonably long to spin up dev servers (sometimes minutes!) and HMR updates can take seconds to reflect in the browser. Vite addresses these issues by leveraging:
+
+- **Native ES modules** in the browser
+- **Compile-to-native tools** like esbuild written in Go
+
+This approach provides instant server start and lightning-fast HMR that stays fast regardless of application size.
+
+<Tip>
+Learn more about the problems Vite solves and the rationale behind the project in [Why Vite](/why-vite).
+</Tip>
+
+## Get Started
+
+Ready to build your first Vite project? Jump right in with our quickstart guide:
+
+<CardGroup cols={3}>
+  <Card title="Quickstart" icon="play" href="/quickstart">
+    Get up and running in minutes with create-vite
+  </Card>
+  
+  <Card title="Why Vite" icon="circle-question" href="/why-vite">
+    Understand the problems Vite solves
+  </Card>
+  
+  <Card title="Features" icon="sparkles" href="/features">
+    Explore Vite's rich feature set
+  </Card>
+</CardGroup>
+
+## Framework Support
+
+Vite supports all modern frameworks through official and community-maintained templates:
+
+<CardGroup cols={4}>
+  <Card title="React" icon="react">
+    Full React and React + TypeScript support with Fast Refresh
+  </Card>
+  
+  <Card title="Vue" icon="vuejs">
+    First-class Vue 3 support with SFC and JSX
+  </Card>
+  
+  <Card title="Svelte" icon="fire">
+    Lightning-fast Svelte development
+  </Card>
+  
+  <Card title="Solid" icon="cube">
+    Build reactive apps with Solid
+  </Card>
+  
+  <Card title="Preact" icon="p">
+    Lightweight alternative to React
+  </Card>
+  
+  <Card title="Lit" icon="lightbulb">
+    Web Components with Lit
+  </Card>
+  
+  <Card title="Qwik" icon="q">
+    Resumable framework for instant apps
+  </Card>
+  
+  <Card title="Vanilla" icon="js">
+    Pure JavaScript/TypeScript
+  </Card>
+</CardGroup>
+
+## Browser Support
+
+<Note>
+During development, Vite assumes a modern browser with support for native ES modules. For production, Vite targets browsers that support [Baseline Widely Available](https://web-platform-dx.github.io/web-features/) (browsers released at least 2.5 years ago).
+</Note>
+
+Legacy browsers can be supported through the official [@vitejs/plugin-legacy](https://github.com/vitejs/vite/tree/main/packages/plugin-legacy) plugin.
+
+## Try Vite Online
+
+You can try Vite online without installing anything on your machine:
+
+<Card title="Try on StackBlitz" icon="bolt" href="https://vite.new">
+  Open a Vite project directly in your browser with StackBlitz
+</Card>
+
+Navigate to `vite.new/{template}` to select your framework:
+
+- [vite.new/react](https://vite.new/react) - React
+- [vite.new/vue](https://vite.new/vue) - Vue  
+- [vite.new/svelte](https://vite.new/svelte) - Svelte
+- [vite.new/solid](https://vite.new/solid) - Solid
+
+## Community
+
+If you have questions or need help, reach out to the community:
+
+<CardGroup cols={2}>
+  <Card title="Discord" icon="discord" href="https://chat.vite.dev">
+    Join the Vite Discord community
+  </Card>
+  
+  <Card title="GitHub Discussions" icon="github" href="https://github.com/vitejs/vite/discussions">
+    Ask questions and share ideas
+  </Card>
+</CardGroup>

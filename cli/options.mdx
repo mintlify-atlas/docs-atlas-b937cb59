@@ -1,0 +1,543 @@
+---
+title: CLI Options
+description: Complete reference for all Vite CLI options and flags available across all commands
+---
+
+Vite's CLI provides both global options that work with all commands and command-specific options.
+
+## Global Options
+
+These options are available for all Vite commands (`vite`, `vite build`, `vite preview`, `vite optimize`).
+
+### Configuration
+
+<ParamField path="-c, --config" type="string" optional>
+  Use a specific configuration file instead of auto-resolving.
+  
+  Vite will automatically try to resolve a config file named `vite.config.js` inside the project root. Use this option to specify a different config file.
+  
+  ```bash
+  vite --config vite.config.prod.js
+  vite build --config custom-config.js
+  vite --config config/vite.staging.js
+  ```
+</ParamField>
+
+<ParamField path="--base" type="string" optional default="/">
+  Public base path for the application. Must start and end with a slash.
+  
+  This is useful when deploying to a subdirectory or using a CDN.
+  
+  ```bash
+  vite --base /my-app/
+  vite build --base https://cdn.example.com/
+  vite --base ./  # relative base for file protocol
+  ```
+  
+  <Warning>
+    When using a relative base like `./`, make sure all asset paths are relative.
+  </Warning>
+</ParamField>
+
+<ParamField path="--configLoader" type="'bundle' | 'runner' | 'native'" optional default="bundle">
+  Specify how to load the configuration file.
+  
+  - `bundle` - Bundle the config with Rolldown (default, most compatible)
+  - `runner` - Process the config on the fly (experimental)
+  - `native` - Load using the native runtime (experimental)
+  
+  ```bash
+  vite --configLoader runner
+  vite build --configLoader native
+  ```
+</ParamField>
+
+### Logging
+
+<ParamField path="-l, --logLevel" type="'info' | 'warn' | 'error' | 'silent'" optional default="info">
+  Set the verbosity level of console output.
+  
+  - `info` - Show all messages (default)
+  - `warn` - Only warnings and errors
+  - `error` - Only errors
+  - `silent` - No output
+  
+  ```bash
+  vite --logLevel warn
+  vite build --logLevel silent
+  vite --logLevel error
+  ```
+</ParamField>
+
+<ParamField path="--clearScreen" type="boolean" optional default={true}>
+  Allow or disable clearing the terminal screen when logging.
+  
+  ```bash
+  vite --clearScreen false
+  vite build --clearScreen false
+  ```
+</ParamField>
+
+### Debugging
+
+<ParamField path="-d, --debug" type="string | boolean" optional>
+  Show debug logs. Can optionally filter by namespace.
+  
+  ```bash
+  vite --debug
+  vite --debug vite:*
+  vite --debug vite:transform
+  vite build -d
+  ```
+  
+  You can use glob patterns to filter debug logs:
+  
+  ```bash
+  vite --debug vite:*         # All vite debug logs
+  vite --debug vite:deps      # Dependency optimization logs
+  vite --debug vite:transform # Transform logs
+  vite --debug *              # All debug logs
+  ```
+</ParamField>
+
+<ParamField path="-f, --filter" type="string" optional>
+  Filter debug logs by pattern.
+  
+  ```bash
+  vite --debug --filter react
+  vite --debug vite:* --filter transform
+  ```
+</ParamField>
+
+### Environment
+
+<ParamField path="-m, --mode" type="string" optional>
+  Set the environment mode. This determines which `.env` file is loaded.
+  
+  ```bash
+  vite --mode development
+  vite build --mode staging
+  vite --mode production
+  ```
+  
+  By default:
+  - `vite` uses `development` mode
+  - `vite build` uses `production` mode
+  - `vite preview` uses `production` mode
+  
+  <Info>
+    Mode determines which `.env.[mode]` file is loaded. See [Env Variables](/guide/env-and-mode) for more details.
+  </Info>
+</ParamField>
+
+### Help & Version
+
+<ParamField path="-h, --help" type="boolean" optional>
+  Display available CLI options.
+  
+  ```bash
+  vite --help
+  vite build --help
+  vite preview -h
+  ```
+</ParamField>
+
+<ParamField path="-v, --version" type="boolean" optional>
+  Display the Vite version number.
+  
+  ```bash
+  vite --version
+  vite -v
+  ```
+</ParamField>
+
+---
+
+## Dev Server Options
+
+Options specific to the `vite` command (dev server).
+
+### Network
+
+<ParamField path="--host" type="string | boolean" optional>
+  Specify which IP addresses the server should listen on.
+  
+  - Not set: Listen on `localhost` only
+  - `true` or no value: Listen on all addresses including LAN and public
+  - Specific IP: Listen on that IP address
+  - `0.0.0.0`: Listen on all addresses
+  
+  ```bash
+  vite --host                    # Listen on all addresses
+  vite --host 0.0.0.0           # Listen on all addresses
+  vite --host 192.168.1.100     # Listen on specific IP
+  ```
+</ParamField>
+
+<ParamField path="--port" type="number" optional default={5173}>
+  Specify the port number for the dev server.
+  
+  ```bash
+  vite --port 3000
+  vite --port 8080
+  ```
+  
+  <Info>
+    If the port is already in use, Vite will automatically try the next available port unless `--strictPort` is specified.
+  </Info>
+</ParamField>
+
+<ParamField path="--strictPort" type="boolean" optional>
+  Exit if the specified port is already in use instead of trying the next available port.
+  
+  ```bash
+  vite --port 3000 --strictPort
+  ```
+</ParamField>
+
+<ParamField path="--cors" type="boolean" optional>
+  Enable CORS for the dev server. Allows requests from any origin.
+  
+  ```bash
+  vite --cors
+  ```
+</ParamField>
+
+### Browser
+
+<ParamField path="--open" type="boolean | string" optional>
+  Automatically open the app in the browser on server start.
+  
+  - `true` or no value: Open to the root path
+  - String: Open to the specified path
+  
+  ```bash
+  vite --open                   # Open to /
+  vite --open /docs             # Open to /docs
+  vite --open /about/index.html # Open to specific page
+  ```
+</ParamField>
+
+### Optimization
+
+<ParamField path="--force" type="boolean" optional>
+  Force Vite to ignore the dependency optimization cache and re-bundle.
+  
+  Use this when you want to force a fresh dependency optimization, for example after installing new packages or changing optimization configuration.
+  
+  ```bash
+  vite --force
+  ```
+</ParamField>
+
+### Experimental
+
+<ParamField path="--experimentalBundle" type="boolean" optional>
+  Enable experimental full bundle mode.
+  
+  <Warning>
+    This is highly experimental and may not work correctly. Do not use in production.
+  </Warning>
+  
+  ```bash
+  vite --experimentalBundle
+  ```
+</ParamField>
+
+---
+
+## Build Options
+
+Options specific to the `vite build` command.
+
+### Output
+
+<ParamField path="--outDir" type="string" optional default="dist">
+  Output directory for the production build (relative to project root).
+  
+  ```bash
+  vite build --outDir build
+  vite build --outDir public/dist
+  vite build --outDir ../output
+  ```
+</ParamField>
+
+<ParamField path="--assetsDir" type="string" optional default="assets">
+  Directory (relative to `outDir`) to place assets in.
+  
+  ```bash
+  vite build --assetsDir static
+  vite build --assetsDir public/assets
+  ```
+</ParamField>
+
+<ParamField path="--emptyOutDir" type="boolean" optional>
+  Force empty the output directory when it's outside of the project root.
+  
+  By default, Vite will:
+  - Empty `outDir` if it's inside the project root
+  - Warn and not empty if it's outside the project root
+  
+  Use this flag to force emptying even when outside root.
+  
+  ```bash
+  vite build --outDir ../dist --emptyOutDir
+  ```
+</ParamField>
+
+### Assets
+
+<ParamField path="--assetsInlineLimit" type="number" optional default={4096}>
+  Static asset base64 inline threshold in bytes.
+  
+  Assets smaller than this will be inlined as base64 strings. Set to `0` to disable inlining.
+  
+  ```bash
+  vite build --assetsInlineLimit 8192  # 8kb threshold
+  vite build --assetsInlineLimit 0     # Disable inlining
+  ```
+</ParamField>
+
+### Code Processing
+
+<ParamField path="--target" type="string" optional default="baseline-widely-available">
+  Transpile target for the build output.
+  
+  Can be a specific browser version or one of the following:
+  - `baseline-widely-available` - Widely available baseline (default)
+  - `esnext` - Latest ECMAScript features
+  - Browser name and version (e.g., `chrome90`, `safari13`)
+  
+  ```bash
+  vite build --target esnext
+  vite build --target chrome90
+  vite build --target safari13
+  vite build --target es2015
+  ```
+</ParamField>
+
+<ParamField path="--minify" type="boolean | 'terser' | 'esbuild'" optional default="esbuild">
+  Enable/disable minification, or specify the minifier to use.
+  
+  - `esbuild` - Use esbuild (default, faster)
+  - `terser` - Use Terser (slower, better compression)
+  - `false` - Disable minification
+  
+  ```bash
+  vite build --minify terser
+  vite build --minify false
+  vite build --minify esbuild
+  ```
+</ParamField>
+
+<ParamField path="--sourcemap" type="boolean | 'inline' | 'hidden'" optional default={false}>
+  Generate source maps for the build.
+  
+  - `true` - Generate separate `.map` files
+  - `inline` - Inline source maps in the output files
+  - `hidden` - Generate source maps but don't add source map comments
+  - `false` - Don't generate source maps (default)
+  
+  ```bash
+  vite build --sourcemap
+  vite build --sourcemap inline
+  vite build --sourcemap hidden
+  ```
+</ParamField>
+
+### SSR
+
+<ParamField path="--ssr" type="string" optional>
+  Build the specified entry point for server-side rendering.
+  
+  ```bash
+  vite build --ssr src/entry-server.js
+  vite build --ssr server.ts
+  ```
+</ParamField>
+
+### Manifests
+
+<ParamField path="--manifest" type="boolean | string" optional>
+  Emit a manifest file mapping non-hashed asset filenames to their hashed versions.
+  
+  - `true`: Generate `manifest.json` in `outDir`
+  - String: Custom filename or path for the manifest
+  
+  ```bash
+  vite build --manifest
+  vite build --manifest build-manifest.json
+  vite build --manifest .vite/manifest.json
+  ```
+  
+  The manifest is useful for backend integration to resolve hashed filenames.
+</ParamField>
+
+<ParamField path="--ssrManifest" type="boolean | string" optional>
+  Emit an SSR manifest for determining style links and asset preload directives.
+  
+  ```bash
+  vite build --ssrManifest
+  vite build --ssrManifest ssr-manifest.json
+  ```
+</ParamField>
+
+### Watch Mode
+
+<ParamField path="-w, --watch" type="boolean" optional>
+  Enable watch mode. Rebuilds when source files change.
+  
+  ```bash
+  vite build --watch
+  vite build -w
+  ```
+</ParamField>
+
+### Experimental
+
+<ParamField path="--app" type="boolean" optional>
+  Build all environments. Same as setting `builder: {}` in the configuration.
+  
+  <Warning>
+    This is experimental and may change in future versions.
+  </Warning>
+  
+  ```bash
+  vite build --app
+  ```
+</ParamField>
+
+---
+
+## Preview Options
+
+Options specific to the `vite preview` command.
+
+<ParamField path="--host" type="string | boolean" optional>
+  Specify which IP addresses the preview server should listen on.
+  
+  ```bash
+  vite preview --host
+  vite preview --host 0.0.0.0
+  ```
+</ParamField>
+
+<ParamField path="--port" type="number" optional default={4173}>
+  Specify the port number for the preview server.
+  
+  ```bash
+  vite preview --port 8080
+  ```
+</ParamField>
+
+<ParamField path="--strictPort" type="boolean" optional>
+  Exit if the specified port is already in use.
+  
+  ```bash
+  vite preview --port 8080 --strictPort
+  ```
+</ParamField>
+
+<ParamField path="--open" type="boolean | string" optional>
+  Automatically open the app in the browser.
+  
+  ```bash
+  vite preview --open
+  vite preview --open /about
+  ```
+</ParamField>
+
+<ParamField path="--outDir" type="string" optional default="dist">
+  Specify the output directory to serve.
+  
+  ```bash
+  vite preview --outDir build
+  ```
+</ParamField>
+
+---
+
+## Optimize Options
+
+Options specific to the `vite optimize` command (deprecated).
+
+<ParamField path="--force" type="boolean" optional>
+  Force the optimizer to ignore the cache and re-bundle dependencies.
+  
+  ```bash
+  vite optimize --force
+  ```
+</ParamField>
+
+---
+
+## Environment Variables
+
+You can pass additional arguments to Node.js using environment variables:
+
+```bash
+# Increase Node.js memory limit
+NODE_OPTIONS=--max-old-space-size=4096 vite build
+
+# Enable Node.js debugging
+NODE_OPTIONS=--inspect vite
+
+# Set multiple options
+NODE_OPTIONS="--max-old-space-size=8192 --trace-warnings" vite build
+```
+
+---
+
+## Passing Arguments to Scripts
+
+You can pass extra arguments to your build scripts using `--`:
+
+```bash
+vite build -- --custom-flag
+```
+
+These arguments are available in the config via `process.argv`.
+
+---
+
+## Examples
+
+### Development with Custom Configuration
+
+```bash
+vite --config vite.config.dev.js --mode development --port 3000 --open
+```
+
+### Production Build with Source Maps
+
+```bash
+vite build --mode production --sourcemap --minify terser --outDir dist
+```
+
+### Preview Build with Custom Port
+
+```bash
+vite preview --port 8080 --host 0.0.0.0 --open
+```
+
+### Debug Mode for Transforms
+
+```bash
+vite --debug vite:transform --filter .tsx
+```
+
+### Force Dependency Re-optimization
+
+```bash
+vite --force --clearScreen false
+```
+
+### SSR Build with Manifests
+
+```bash
+# Build client
+vite build --outDir dist/client --manifest
+
+# Build server
+vite build --ssr src/entry-server.js --outDir dist/server --ssrManifest
+```

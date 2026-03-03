@@ -1,0 +1,346 @@
+---
+title: Environment Instances
+description: Using Environment instances in Vite's dev server and programmatic API
+---
+
+<Warning>
+**Release Candidate**: The Environment API is generally in the release candidate phase. We'll maintain stability in the APIs between major releases to allow the ecosystem to experiment and build upon them. However, note that [some specific APIs](/changes/#considering) are still considered experimental.
+
+Resources:
+- [Feedback discussion](https://github.com/vitejs/vite/discussions/16358)
+- [Environment API PR](https://github.com/vitejs/vite/pull/16471)
+
+Please share your feedback with us.
+</Warning>
+
+## Accessing the Environments
+
+During dev, the available environments in a dev server can be accessed using `server.environments`:
+
+```js
+// create the server, or get it from the configureServer hook
+const server = await createServer(/* options */)
+
+const clientEnvironment = server.environments.client
+clientEnvironment.transformRequest(url)
+console.log(server.environments.ssr.moduleGraph)
+```
+
+You can also access the current environment from plugins. See the [Environment API for Plugins](./api-environment-plugins.md#accessing-the-current-environment-in-hooks) for more details.
+
+## DevEnvironment Class
+
+During dev, each environment is an instance of the `DevEnvironment` class:
+
+```ts
+class DevEnvironment {
+  name: string
+  hot: NormalizedHotChannel
+  moduleGraph: EnvironmentModuleGraph
+  plugins: Plugin[]
+  pluginContainer: EnvironmentPluginContainer
+  config: ResolvedConfig & ResolvedDevEnvironmentOptions
+
+  constructor(
+    name: string,
+    config: ResolvedConfig,
+    context: DevEnvironmentContext,
+  )
+
+  async transformRequest(url: string): Promise<TransformResult | null>
+  async warmupRequest(url: string): Promise<void>
+}
+```
+
+### Properties
+
+<ParamField path="name" type="string">
+  Unique identifier for the environment in a Vite server. By default Vite exposes 'client' and 'ssr' environments.
+</ParamField>
+
+<ParamField path="hot" type="NormalizedHotChannel">
+  Communication channel to send and receive messages from the associated module runner in the target runtime
+</ParamField>
+
+<ParamField path="moduleGraph" type="EnvironmentModuleGraph">
+  Graph of module nodes, with the imported relationship between processed modules and the cached result of the processed code
+</ParamField>
+
+<ParamField path="plugins" type="Plugin[]">
+  Resolved plugins for this environment, including the ones created using the per-environment `create` hook
+</ParamField>
+
+<ParamField path="pluginContainer" type="EnvironmentPluginContainer">
+  Allows to resolve, load, and transform code through the environment plugins pipeline
+</ParamField>
+
+<ParamField path="config" type="ResolvedConfig & ResolvedDevEnvironmentOptions">
+  Resolved config options for this environment. Options at the server global scope are taken as defaults for all environments, and can be overridden (resolve conditions, external, optimizedDeps)
+</ParamField>
+
+### Constructor
+
+<ParamField path="name" type="string" required>
+  Environment name
+</ParamField>
+
+<ParamField path="config" type="ResolvedConfig" required>
+  Resolved Vite configuration
+</ParamField>
+
+<ParamField path="context" type="DevEnvironmentContext" required>
+  Environment context with HMR settings and options
+  
+  <Expandable title="DevEnvironmentContext Interface">
+    ```ts
+    interface DevEnvironmentContext {
+      hot: boolean
+      transport?: HotChannel | WebSocketServer
+      options?: EnvironmentOptions
+      remoteRunner?: {
+        inlineSourceMap?: boolean
+      }
+      depsOptimizer?: DepsOptimizer
+    }
+    ```
+  </Expandable>
+</ParamField>
+
+### Methods
+
+#### transformRequest()
+
+Resolve the URL to an id, load it, and process the code using the plugins pipeline. The module graph is also updated.
+
+**Type Signature:**
+
+```ts
+async transformRequest(url: string): Promise<TransformResult | null>
+```
+
+<ParamField path="url" type="string" required>
+  The URL to transform
+</ParamField>
+
+**Returns:**
+
+<ResponseField name="result" type="TransformResult | null">
+  The transform result or null if the module couldn't be processed
+  
+  <Expandable title="TransformResult Interface">
+    ```ts
+    interface TransformResult {
+      code: string
+      map: SourceMap | { mappings: '' } | null
+      etag?: string
+      deps?: string[]
+      dynamicDeps?: string[]
+    }
+    ```
+  </Expandable>
+</ResponseField>
+
+An environment instance in the Vite server lets you process a URL using the `environment.transformRequest(url)` method. This function will use the plugin pipeline to resolve the `url` to a module `id`, load it (reading the file from the file system or through a plugin that implements a virtual module), and then transform the code.
+
+While transforming the module, imports and other metadata will be recorded in the environment module graph by creating or updating the corresponding module node. When processing is done, the transform result is also stored in the module.
+
+#### warmupRequest()
+
+Register a request to be processed with low priority. This is useful to avoid waterfalls.
+
+**Type Signature:**
+
+```ts
+async warmupRequest(url: string): Promise<void>
+```
+
+<ParamField path="url" type="string" required>
+  The URL to warmup
+</ParamField>
+
+The Vite server has information about the imported modules by other requests, so it can warmup the module graph so the modules are already processed when they are requested.
+
+## Separate Module Graphs
+
+Each environment has an isolated module graph. All module graphs have the same signature, so generic algorithms can be implemented to crawl or query the graph without depending on the environment.
+
+`hotUpdate` is a good example. When a file is modified, the module graph of each environment will be used to discover the affected modules and perform HMR for each environment independently.
+
+<Note>
+Vite v5 had a mixed Client and SSR module graph. Given an unprocessed or invalidated node, it isn't possible to know if it corresponds to the Client, SSR, or both environments. Module nodes have some properties prefixed, like `clientImportedModules` and `ssrImportedModules` (and `importedModules` that returns the union of both).
+
+`importers` contains all importers from both the Client and SSR environment for each module node. A module node also has `transformResult` and `ssrTransformResult`. A backward compatibility layer allows the ecosystem to migrate from the deprecated `server.moduleGraph`.
+</Note>
+
+## EnvironmentModuleNode
+
+Each module is represented by an `EnvironmentModuleNode` instance. Modules may be registered in the graph without yet being processed (`transformResult` would be `null` in that case). `importers` and `importedModules` are also updated after the module is processed.
+
+```ts
+class EnvironmentModuleNode {
+  environment: string
+  url: string
+  id: string | null = null
+  file: string | null = null
+  type: 'js' | 'css'
+  
+  importers = new Set<EnvironmentModuleNode>()
+  importedModules = new Set<EnvironmentModuleNode>()
+  importedBindings: Map<string, Set<string>> | null = null
+  
+  info?: ModuleInfo
+  meta?: Record<string, any>
+  transformResult: TransformResult | null = null
+  
+  acceptedHmrDeps = new Set<EnvironmentModuleNode>()
+  acceptedHmrExports: Set<string> | null = null
+  isSelfAccepting?: boolean
+  lastHMRTimestamp = 0
+  lastInvalidationTimestamp = 0
+}
+```
+
+### Properties
+
+<ParamField path="environment" type="string">
+  The environment this module belongs to
+</ParamField>
+
+<ParamField path="url" type="string">
+  The module URL
+</ParamField>
+
+<ParamField path="id" type="string | null">
+  The resolved module ID (null if not yet resolved)
+</ParamField>
+
+<ParamField path="file" type="string | null">
+  The file path on disk (null for virtual modules)
+</ParamField>
+
+<ParamField path="type" type="'js' | 'css'">
+  Module type
+</ParamField>
+
+<ParamField path="importers" type="Set<EnvironmentModuleNode>">
+  Modules that import this module
+</ParamField>
+
+<ParamField path="importedModules" type="Set<EnvironmentModuleNode>">
+  Modules imported by this module
+</ParamField>
+
+<ParamField path="transformResult" type="TransformResult | null">
+  The cached transform result (null if not yet processed)
+</ParamField>
+
+<ParamField path="isSelfAccepting" type="boolean | undefined">
+  Whether this module accepts HMR updates for itself
+</ParamField>
+
+## EnvironmentModuleGraph
+
+`environment.moduleGraph` is an instance of `EnvironmentModuleGraph`:
+
+```ts
+class EnvironmentModuleGraph {
+  environment: string
+  
+  urlToModuleMap = new Map<string, EnvironmentModuleNode>()
+  idToModuleMap = new Map<string, EnvironmentModuleNode>()
+  etagToModuleMap = new Map<string, EnvironmentModuleNode>()
+  fileToModulesMap = new Map<string, Set<EnvironmentModuleNode>>()
+
+  constructor(
+    environment: string,
+    resolveId: (url: string) => Promise<PartialResolvedId | null>,
+  )
+
+  async getModuleByUrl(rawUrl: string): Promise<EnvironmentModuleNode | undefined>
+  getModuleById(id: string): EnvironmentModuleNode | undefined
+  getModulesByFile(file: string): Set<EnvironmentModuleNode> | undefined
+  
+  onFileChange(file: string): void
+  onFileDelete(file: string): void
+  
+  invalidateModule(
+    mod: EnvironmentModuleNode,
+    seen?: Set<EnvironmentModuleNode>,
+    timestamp?: number,
+    isHmr?: boolean,
+  ): void
+  
+  invalidateAll(): void
+  
+  async ensureEntryFromUrl(
+    rawUrl: string,
+    setIsSelfAccepting?: boolean,
+  ): Promise<EnvironmentModuleNode>
+  
+  createFileOnlyEntry(file: string): EnvironmentModuleNode
+  async resolveUrl(url: string): Promise<ResolvedUrl>
+  
+  updateModuleTransformResult(
+    mod: EnvironmentModuleNode,
+    result: TransformResult | null,
+  ): void
+  
+  getModuleByEtag(etag: string): EnvironmentModuleNode | undefined
+}
+```
+
+### Properties
+
+<ParamField path="environment" type="string">
+  The environment name this graph belongs to
+</ParamField>
+
+<ParamField path="urlToModuleMap" type="Map<string, EnvironmentModuleNode>">
+  Map from module URL to module node
+</ParamField>
+
+<ParamField path="idToModuleMap" type="Map<string, EnvironmentModuleNode>">
+  Map from module ID to module node
+</ParamField>
+
+<ParamField path="fileToModulesMap" type="Map<string, Set<EnvironmentModuleNode>>">
+  Map from file path to set of module nodes (one file can have multiple modules)
+</ParamField>
+
+### Methods
+
+<ParamField path="getModuleByUrl" type="(rawUrl: string) => Promise<EnvironmentModuleNode | undefined>">
+  Get a module by its URL
+</ParamField>
+
+<ParamField path="getModuleById" type="(id: string) => EnvironmentModuleNode | undefined">
+  Get a module by its resolved ID
+</ParamField>
+
+<ParamField path="getModulesByFile" type="(file: string) => Set<EnvironmentModuleNode> | undefined">
+  Get all modules associated with a file path
+</ParamField>
+
+<ParamField path="onFileChange" type="(file: string) => void">
+  Handle file change events
+</ParamField>
+
+<ParamField path="onFileDelete" type="(file: string) => void">
+  Handle file deletion events
+</ParamField>
+
+<ParamField path="invalidateModule" type="(mod: EnvironmentModuleNode, seen?: Set, timestamp?: number, isHmr?: boolean) => void">
+  Invalidate a module and optionally its importers
+</ParamField>
+
+<ParamField path="invalidateAll" type="() => void">
+  Invalidate all modules in the graph
+</ParamField>
+
+<ParamField path="ensureEntryFromUrl" type="(rawUrl: string, setIsSelfAccepting?: boolean) => Promise<EnvironmentModuleNode>">
+  Ensure a module entry exists for the given URL, creating it if necessary
+</ParamField>
+
+<ParamField path="updateModuleTransformResult" type="(mod: EnvironmentModuleNode, result: TransformResult | null) => void">
+  Update the transform result for a module
+</ParamField>

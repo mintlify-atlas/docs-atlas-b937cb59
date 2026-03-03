@@ -1,80 +1,334 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart
+description: Get started with Vite in minutes
 ---
 
-## Get started in three steps
+# Quickstart
 
-Get your documentation site running locally and make your first customization.
+Get up and running with Vite in just a few minutes.
 
-### Step 1: Set up your local environment
+## Prerequisites
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+<Warning>
+Vite requires [Node.js](https://nodejs.org/en/) version **20.19+** or **22.12+**. Some templates require a higher Node.js version to work, so please upgrade if your package manager warns about it.
+</Warning>
 
-### Step 2: Deploy your changes
+## Scaffolding Your First Project
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+Use your preferred package manager to create a new Vite project:
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+<Steps>
+  <Step title="Run create-vite">
+    Choose your package manager and run the create command:
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+    <CodeGroup>
+      ```bash npm
+      npm create vite@latest
+      ```
 
-### Step 3: Go live
+      ```bash yarn
+      yarn create vite
+      ```
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+      ```bash pnpm
+      pnpm create vite
+      ```
 
-## Next steps
+      ```bash bun
+      bun create vite
+      ```
 
-Now that you have your docs running, explore these key features:
+      ```bash deno
+      deno init --npm vite
+      ```
+    </CodeGroup>
+  </Step>
 
-<CardGroup cols={2}>
+  <Step title="Follow the prompts">
+    You'll be prompted to:
+    - Choose a project name
+    - Select a framework (React, Vue, Svelte, etc.)
+    - Pick a variant (JavaScript or TypeScript)
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
+    The tool will create a new directory with your project files.
+  </Step>
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
+  <Step title="Install dependencies">
+    Navigate to your project directory and install dependencies:
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
+    <CodeGroup>
+      ```bash npm
+      cd my-project
+      npm install
+      ```
 
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
+      ```bash yarn
+      cd my-project
+      yarn
+      ```
 
-</CardGroup>
+      ```bash pnpm
+      cd my-project
+      pnpm install
+      ```
+
+      ```bash bun
+      cd my-project
+      bun install
+      ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Start the dev server">
+    Run the development server:
+
+    <CodeGroup>
+      ```bash npm
+      npm run dev
+      ```
+
+      ```bash yarn
+      yarn dev
+      ```
+
+      ```bash pnpm
+      pnpm dev
+      ```
+
+      ```bash bun
+      bun dev
+      ```
+    </CodeGroup>
+
+    Your app is now running at `http://localhost:5173`!
+  </Step>
+</Steps>
+
+## Using Command Line Options
+
+You can also directly specify the project name and template via command line options. For example, to scaffold a Vite + React project:
+
+<CodeGroup>
+  ```bash npm
+  # npm 7+, extra double-dash is needed:
+  npm create vite@latest my-react-app -- --template react
+  ```
+
+  ```bash yarn
+  yarn create vite my-react-app --template react
+  ```
+
+  ```bash pnpm
+  pnpm create vite my-react-app --template react
+  ```
+
+  ```bash bun
+  bun create vite my-react-app --template react
+  ```
+</CodeGroup>
+
+<Tip>
+Use `.` for the project name to scaffold in the current directory.
+</Tip>
+
+## Available Templates
+
+Vite supports a wide range of official templates:
+
+| JavaScript | TypeScript |
+| --- | --- |
+| `vanilla` | `vanilla-ts` |
+| `vue` | `vue-ts` |
+| `react` | `react-ts` |
+| `react-swc` | `react-swc-ts` |
+| `preact` | `preact-ts` |
+| `lit` | `lit-ts` |
+| `svelte` | `svelte-ts` |
+| `solid` | `solid-ts` |
+| `qwik` | `qwik-ts` |
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+React templates come in two variants: standard (using Babel) and SWC (faster compilation). The `react-swc` and `react-swc-ts` templates use [SWC](https://swc.rs/) for faster builds.
 </Note>
+
+## Manual Installation
+
+If you prefer to set up Vite manually in an existing project:
+
+<Steps>
+  <Step title="Install Vite">
+    Add Vite as a dev dependency:
+
+    <CodeGroup>
+      ```bash npm
+      npm install -D vite
+      ```
+
+      ```bash yarn
+      yarn add -D vite
+      ```
+
+      ```bash pnpm
+      pnpm add -D vite
+      ```
+
+      ```bash bun
+      bun add -D vite
+      ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Create an index.html">
+    Create an `index.html` file in your project root:
+
+    ```html index.html
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Vite App</title>
+      </head>
+      <body>
+        <div id="app"></div>
+        <script type="module" src="/src/main.js"></script>
+      </body>
+    </html>
+    ```
+  </Step>
+
+  <Step title="Create your source files">
+    Create a `src/main.js` file:
+
+    ```javascript src/main.js
+    document.querySelector('#app').innerHTML = `
+      <h1>Hello Vite!</h1>
+      <p>Edit src/main.js to get started</p>
+    `
+    ```
+  </Step>
+
+  <Step title="Run Vite">
+    Start the development server:
+
+    <CodeGroup>
+      ```bash npm
+      npx vite
+      ```
+
+      ```bash yarn
+      yarn vite
+      ```
+
+      ```bash pnpm
+      pnpm vite
+      ```
+
+      ```bash bun
+      bunx vite
+      ```
+    </CodeGroup>
+
+    Your app will be served at `http://localhost:5173`!
+  </Step>
+</Steps>
+
+## Understanding the Project Structure
+
+### index.html and Project Root
+
+One thing you may have noticed is that in a Vite project, `index.html` is front-and-central instead of being tucked away inside `public`. This is intentional:
+
+- During development **Vite is a server**, and `index.html` is the entry point to your application
+- Vite treats `index.html` as source code and part of the module graph
+- `<script type="module" src="...">` references your JavaScript source code
+- Inline `<script type="module">` and CSS via `<link href>` also enjoy Vite-specific features
+- URLs inside `index.html` are automatically rebased - no need for special `%PUBLIC_URL%` placeholders
+
+<Tip>
+Vite has the concept of a "root directory" from which files are served. You'll see it referenced as `<root>` throughout the documentation. Absolute URLs in your source code will be resolved using the project root as base.
+</Tip>
+
+## NPM Scripts
+
+In a scaffolded Vite project, your `package.json` will include these default scripts:
+
+```json package.json
+{
+  "scripts": {
+    "dev": "vite",          // start dev server
+    "build": "vite build",   // build for production
+    "preview": "vite preview" // preview production build locally
+  }
+}
+```
+
+You can specify additional CLI options like `--port` or `--open`:
+
+```json package.json
+{
+  "scripts": {
+    "dev": "vite --open --port 3000"
+  }
+}
+```
+
+For a full list of CLI options, run `npx vite --help` in your project.
+
+## Community Templates
+
+The official `create-vite` templates are basic starting points. Check out [Awesome Vite](https://github.com/vitejs/awesome-vite#templates) for community-maintained templates that include:
+
+- Additional tools and configurations
+- Different frameworks and libraries
+- Full-stack setups
+- Monorepo configurations
+
+You can use a tool like [tiged](https://github.com/tiged/tiged) to scaffold from these templates:
+
+```bash
+npx tiged user/project my-project
+cd my-project
+npm install
+npm run dev
+```
+
+## Try Vite Online
+
+Want to try Vite without installing anything? Use StackBlitz:
+
+<CardGroup cols={2}>
+  <Card title="Vanilla JavaScript" icon="js" href="https://vite.new/vanilla">
+    Pure JavaScript starter
+  </Card>
+  
+  <Card title="React" icon="react" href="https://vite.new/react">
+    React with Fast Refresh
+  </Card>
+  
+  <Card title="Vue" icon="vuejs" href="https://vite.new/vue">
+    Vue 3 with SFC support
+  </Card>
+  
+  <Card title="Svelte" icon="fire" href="https://vite.new/svelte">
+    Svelte with HMR
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+Now that you have a Vite project running, explore what you can do:
+
+<CardGroup cols={3}>
+  <Card title="Features" icon="sparkles" href="/features">
+    Discover Vite's rich features
+  </Card>
+  
+  <Card title="Configuration" icon="gear" href="/config">
+    Configure Vite for your needs
+  </Card>
+  
+  <Card title="Plugins" icon="puzzle-piece" href="/plugins">
+    Extend Vite with plugins
+  </Card>
+</CardGroup>

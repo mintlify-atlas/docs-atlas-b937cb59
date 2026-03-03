@@ -1,0 +1,465 @@
+---
+title: CLI Commands
+description: Complete reference for all Vite CLI commands including dev server, build, preview, and optimize
+---
+
+Vite provides a command-line interface for development, building, and previewing your application.
+
+## Dev Server
+
+### vite
+
+Start the Vite development server in the current directory.
+
+<CodeGroup>
+```bash Default
+vite
+```
+
+```bash Custom Root
+vite src
+```
+
+```bash With Options
+vite --host 0.0.0.0 --port 3000 --open
+```
+</CodeGroup>
+
+**Aliases:** `vite dev`, `vite serve`
+
+#### Parameters
+
+<ParamField path="root" type="string" optional>
+  The root directory to serve. Defaults to current directory.
+  
+  ```bash
+  vite ./my-project
+  ```
+</ParamField>
+
+#### Command Options
+
+<ParamField path="--host" type="string" optional>
+  Specify the hostname for the server. Use `0.0.0.0` or `true` to listen on all addresses, including LAN and public addresses.
+  
+  ```bash
+  vite --host 0.0.0.0
+  vite --host
+  ```
+</ParamField>
+
+<ParamField path="--port" type="number" optional>
+  Specify the port number. Default is `5173`.
+  
+  ```bash
+  vite --port 3000
+  ```
+</ParamField>
+
+<ParamField path="--open" type="boolean | string" optional>
+  Automatically open the app in the browser on server start. Can optionally specify a URL path.
+  
+  ```bash
+  vite --open
+  vite --open /docs/index.html
+  ```
+</ParamField>
+
+<ParamField path="--cors" type="boolean" optional>
+  Enable CORS for the development server.
+  
+  ```bash
+  vite --cors
+  ```
+</ParamField>
+
+<ParamField path="--strictPort" type="boolean" optional>
+  Exit if the specified port is already in use, instead of automatically trying the next available port.
+  
+  ```bash
+  vite --port 3000 --strictPort
+  ```
+</ParamField>
+
+<ParamField path="--force" type="boolean" optional>
+  Force the optimizer to ignore the cache and re-bundle dependencies.
+  
+  ```bash
+  vite --force
+  ```
+</ParamField>
+
+<ParamField path="--experimentalBundle" type="boolean" optional>
+  Enable experimental full bundle mode. This is highly experimental.
+  
+  ```bash
+  vite --experimentalBundle
+  ```
+</ParamField>
+
+#### Terminal Output
+
+When starting the dev server, you'll see output like:
+
+```bash
+  VITE v6.0.0  ready in 350 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help
+```
+
+#### CLI Shortcuts
+
+While the dev server is running, you can use these keyboard shortcuts:
+
+- **r + enter** - Restart the server
+- **u + enter** - Show server URLs
+- **o + enter** - Open in browser
+- **c + enter** - Clear console
+- **q + enter** - Quit the server
+- **h + enter** - Show help
+
+---
+
+## Build
+
+### vite build
+
+Build your application for production.
+
+<CodeGroup>
+```bash Default
+vite build
+```
+
+```bash Custom Root
+vite build src
+```
+
+```bash With Options
+vite build --outDir build --sourcemap
+```
+</CodeGroup>
+
+#### Parameters
+
+<ParamField path="root" type="string" optional>
+  The root directory to build. Defaults to current directory.
+  
+  ```bash
+  vite build ./my-project
+  ```
+</ParamField>
+
+#### Command Options
+
+<ParamField path="--target" type="string" optional default="baseline-widely-available">
+  Transpile target for the build. Determines browser compatibility.
+  
+  ```bash
+  vite build --target esnext
+  vite build --target chrome90
+  ```
+</ParamField>
+
+<ParamField path="--outDir" type="string" optional default="dist">
+  Output directory for the production build.
+  
+  ```bash
+  vite build --outDir build
+  vite build --outDir public/dist
+  ```
+</ParamField>
+
+<ParamField path="--assetsDir" type="string" optional default="assets">
+  Directory under `outDir` to place assets in.
+  
+  ```bash
+  vite build --assetsDir static
+  ```
+</ParamField>
+
+<ParamField path="--assetsInlineLimit" type="number" optional default={4096}>
+  Static asset base64 inline threshold in bytes. Assets smaller than this will be inlined as base64.
+  
+  ```bash
+  vite build --assetsInlineLimit 8192
+  vite build --assetsInlineLimit 0  # disable inlining
+  ```
+</ParamField>
+
+<ParamField path="--ssr" type="string" optional>
+  Build specified entry for server-side rendering.
+  
+  ```bash
+  vite build --ssr src/entry-server.js
+  ```
+</ParamField>
+
+<ParamField path="--sourcemap" type="boolean | 'inline' | 'hidden'" optional default={false}>
+  Output source maps for the build.
+  
+  - `true` - Generate separate sourcemap files
+  - `'inline'` - Inline sourcemaps in the output files
+  - `'hidden'` - Generate sourcemaps but don't reference them in files
+  
+  ```bash
+  vite build --sourcemap
+  vite build --sourcemap inline
+  vite build --sourcemap hidden
+  ```
+</ParamField>
+
+<ParamField path="--minify" type="boolean | 'terser' | 'esbuild'" optional default="esbuild">
+  Enable/disable minification, or specify the minifier to use.
+  
+  ```bash
+  vite build --minify terser
+  vite build --minify false
+  ```
+</ParamField>
+
+<ParamField path="--manifest" type="boolean | string" optional>
+  Emit a `manifest.json` file in the output directory with a mapping of non-hashed asset filenames to their hashed versions.
+  
+  ```bash
+  vite build --manifest
+  vite build --manifest manifest.json
+  vite build --manifest .vite/manifest.json
+  ```
+</ParamField>
+
+<ParamField path="--ssrManifest" type="boolean | string" optional>
+  Emit an SSR manifest file for determining style links and asset preload directives in production.
+  
+  ```bash
+  vite build --ssrManifest
+  vite build --ssrManifest ssr-manifest.json
+  ```
+</ParamField>
+
+<ParamField path="--emptyOutDir" type="boolean" optional>
+  Force Vite to empty the output directory even if it's outside of the project root. By default, Vite will warn and not empty it.
+  
+  ```bash
+  vite build --emptyOutDir
+  ```
+</ParamField>
+
+<ParamField path="--watch" type="boolean" optional>
+  Enable watch mode. Rebuilds when modules have changed on disk.
+  
+  ```bash
+  vite build --watch
+  ```
+</ParamField>
+
+<ParamField path="--app" type="boolean" optional>
+  Build all environments. Same as setting `builder: {}` in config. This is experimental.
+  
+  ```bash
+  vite build --app
+  ```
+</ParamField>
+
+#### Terminal Output
+
+When building for production, you'll see output like:
+
+```bash
+vite v6.0.0 building for production...
+✓ 127 modules transformed.
+dist/index.html                   0.45 kB │ gzip:  0.30 kB
+dist/assets/index-DlrS5zTx.css    1.23 kB │ gzip:  0.61 kB
+dist/assets/index-BN7I0VLa.js   143.48 kB │ gzip: 46.13 kB
+✓ built in 1.25s
+```
+
+---
+
+## Preview
+
+### vite preview
+
+Locally preview the production build. This command starts a static web server that serves the files from `outDir` (default: `dist`).
+
+<Warning>
+  `vite preview` is intended for previewing the build locally and is not meant to be used as a production server.
+</Warning>
+
+<CodeGroup>
+```bash Default
+vite preview
+```
+
+```bash Custom Root
+vite preview src
+```
+
+```bash With Options
+vite preview --host 0.0.0.0 --port 8080
+```
+</CodeGroup>
+
+#### Parameters
+
+<ParamField path="root" type="string" optional>
+  The root directory containing the build. Defaults to current directory.
+  
+  ```bash
+  vite preview ./my-project
+  ```
+</ParamField>
+
+#### Command Options
+
+<ParamField path="--host" type="string" optional>
+  Specify the hostname for the preview server.
+  
+  ```bash
+  vite preview --host 0.0.0.0
+  vite preview --host
+  ```
+</ParamField>
+
+<ParamField path="--port" type="number" optional>
+  Specify the port number. Default is `4173`.
+  
+  ```bash
+  vite preview --port 8080
+  ```
+</ParamField>
+
+<ParamField path="--strictPort" type="boolean" optional>
+  Exit if the specified port is already in use.
+  
+  ```bash
+  vite preview --port 8080 --strictPort
+  ```
+</ParamField>
+
+<ParamField path="--open" type="boolean | string" optional>
+  Automatically open the app in the browser on server start.
+  
+  ```bash
+  vite preview --open
+  vite preview --open /about
+  ```
+</ParamField>
+
+<ParamField path="--outDir" type="string" optional default="dist">
+  Output directory to serve.
+  
+  ```bash
+  vite preview --outDir build
+  ```
+</ParamField>
+
+#### Terminal Output
+
+When starting the preview server, you'll see output like:
+
+```bash
+  ➜  Local:   http://localhost:4173/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help
+```
+
+---
+
+## Optimize
+
+### vite optimize
+
+<Warning>
+  **Deprecated**: The pre-bundle process runs automatically during development and does not need to be called manually.
+</Warning>
+
+Pre-bundle dependencies. This command was used to manually trigger dependency optimization, but it's now done automatically when starting the dev server.
+
+<CodeGroup>
+```bash Default
+vite optimize
+```
+
+```bash Force Re-bundle
+vite optimize --force
+```
+</CodeGroup>
+
+#### Parameters
+
+<ParamField path="root" type="string" optional>
+  The root directory. Defaults to current directory.
+  
+  ```bash
+  vite optimize ./my-project
+  ```
+</ParamField>
+
+#### Command Options
+
+<ParamField path="--force" type="boolean" optional>
+  Force the optimizer to ignore the cache and re-bundle dependencies.
+  
+  ```bash
+  vite optimize --force
+  ```
+</ParamField>
+
+---
+
+## NPM Scripts
+
+Typical usage in `package.json`:
+
+```json package.json
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  }
+}
+```
+
+You can specify additional CLI options using flags:
+
+```json package.json
+{
+  "scripts": {
+    "dev": "vite --port 3000 --open",
+    "build": "vite build --outDir build",
+    "preview": "vite preview --port 8080"
+  }
+}
+```
+
+Then run:
+
+<CodeGroup>
+```bash npm
+npm run dev
+npm run build
+npm run preview
+```
+
+```bash pnpm
+pnpm dev
+pnpm build
+pnpm preview
+```
+
+```bash yarn
+yarn dev
+yarn build
+yarn preview
+```
+
+```bash bun
+bun dev
+bun build
+bun preview
+```
+</CodeGroup>
